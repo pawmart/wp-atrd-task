@@ -4,7 +4,7 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 
 ## Specyfikacja
 
-- [Features](./features)
+- [Features](./features/secrets)
 - [Swagger](./api/swagger/swagger.yml)
 
 ## Wskazówki
