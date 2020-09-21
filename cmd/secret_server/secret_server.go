@@ -2,27 +2,23 @@ package main
 
 import (
 	"context"
+	"github.com/pawmart/wp-atrd-task/internal/http/app"
 	"github.com/pawmart/wp-atrd-task/internal/storage"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-
-	"github.com/pawmart/wp-atrd-task/internal/http/app"
-	"github.com/pawmart/wp-atrd-task/internal/http/router"
 )
 
 func main() {
-	a := app.NewApp(storage.NewInMemoryStorage())
-	r := router.NewRoutes(a)
-
+	a := setupApp()
 	srv := &http.Server{
-		Handler:      r,
+		Handler:      a.NewRoutes(),
 		Addr:         ":3001",
-		WriteTimeout: 30 * time.Second,
-		ReadTimeout:  30 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	// graceful shutdown
@@ -44,4 +40,8 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Could not listen  %v\n", err)
 	}
+}
+
+func setupApp() *app.App {
+	return app.NewApp(storage.NewInMemoryStorage())
 }

@@ -20,16 +20,20 @@ func NewInMemoryStorage() Storage {
 	}
 }
 
-// AddSecret adds new Secret to Storage
-func (s *InMemoryStorage) AddSecret(secretValue string, viewsLeft uint32, expiresAfterMinutes uint32) Secret {
-	var expireDate *time.Time
-	now := time.Now()
-
-	if expiresAfterMinutes != 0 {
-		t := now.Add(time.Minute * time.Duration(expiresAfterMinutes))
-		expireDate = &t
+func NewInMemoryStorageWithData(data map[uuid.UUID]Secret) Storage {
+	return &InMemoryStorage{
+		mutex:  &sync.Mutex{},
+		values: data,
 	}
+}
 
+// AddSecret adds new Secret to InMemoryStorage
+func (s *InMemoryStorage) AddSecret(
+	secretValue string,
+	viewsLeft uint32,
+	createdAt time.Time,
+	expiresAt *time.Time,
+) Secret {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -38,8 +42,8 @@ func (s *InMemoryStorage) AddSecret(secretValue string, viewsLeft uint32, expire
 		Id:             id,
 		Value:          secretValue,
 		RemainingViews: viewsLeft,
-		CreatedAt:      now,
-		ExpiresAfter:   expireDate,
+		CreatedAt:      createdAt,
+		ExpiresAfter:   expiresAt,
 	}
 
 	return s.values[id]

@@ -7,7 +7,7 @@ import (
 
 // Storage interface for interacting with secret storage
 type Storage interface {
-	AddSecret(secret string, viewsLeft uint32, expiresAfterMinutes uint32) Secret
+	AddSecret(secretValue string, viewsLeft uint32, createdAt time.Time, expiresAt *time.Time) Secret
 	GetSecret(id uuid.UUID) (*Secret, bool)
 }
 
@@ -15,9 +15,9 @@ type Storage interface {
 type Secret struct {
 	Id             uuid.UUID  `json:"hash" xml:"hash"`
 	Value          string     `json:"secretText" xml:"secretText"`
-	RemainingViews uint32     `json:"remainingViews" xml:"remainingViews"`
 	CreatedAt      time.Time  `json:"createdAt" xml:"createdAt"`
 	ExpiresAfter   *time.Time `json:"expiresAt" xml:"expiresAt"`
+	RemainingViews uint32     `json:"remainingViews" xml:"remainingViews"`
 }
 
 // isFetchable checks if secret can be fetch depending on remaining views and expire date

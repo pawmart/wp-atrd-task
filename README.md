@@ -11,3 +11,21 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 
 - Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
 - Rozwiązanie zadania proszę załączyć jako 'merge request'. 
+
+
+## Środowisko deweloperskie
+- odpalenie serwera w katalogu projektu, serwer nasłuchuje na porcie `3001`
+```
+go run cmd/secret_server/secret_server.go
+```
+
+## Testy
+
+- Jednostkowe
+```
+go test ./...
+``` 
+- Behawioralne
+```
+cd cmd/secret_server && godog ../../features
+```

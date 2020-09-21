@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pawmart/wp-atrd-task/internal/http/util"
 	"net/http"
+	"time"
 )
 
 func (a *App) CreateSecretHandler() gin.HandlerFunc {
@@ -16,7 +17,10 @@ func (a *App) CreateSecretHandler() gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		var req request
+		var (
+			req      request
+			expireAt *time.Time
+		)
 
 		if err := c.ShouldBindWith(&req, binding.FormPost); err != nil {
 			// TODO add errors to response
@@ -24,11 +28,16 @@ func (a *App) CreateSecretHandler() gin.HandlerFunc {
 			return
 		}
 
-		secret := a.AddSecret(req.Secret, req.ExpireAfterViews, *req.ExpireAfter)
+		now := time.Now()
+		if *req.ExpireAfter != 0 {
+			t := now.Add(time.Minute * time.Duration(*req.ExpireAfter))
+			expireAt = &t
+		}
+
+		secret := a.AddSecret(req.Secret, req.ExpireAfterViews, now, expireAt)
 		util.PrepareResponse(http.StatusOK, secret, c)
 	}
 }
-
 
 func (a *App) GetSecretHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
