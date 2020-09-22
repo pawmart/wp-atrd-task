@@ -22,6 +22,9 @@ func New(ctx context.Context, db *sqlx.DB) (*Store, error) {
 	if err := s.InitSecretsTable(ctx); err != nil {
 		return nil, fmt.Errorf("failed to init secrets table: %w", err)
 	}
+
+	s.Seed(ctx)
+
 	return s, nil
 }
 
@@ -48,6 +51,11 @@ func (s *Store) InitSecretsTable(ctx context.Context) error {
 		return fmt.Errorf("cannot create 'secrets' table: %w", err)
 	}
 	return nil
+}
+
+// Seed populates DB with test data.
+func (s *Store) Seed(ctx context.Context) {
+	s.DB.MustExec(querySeedTestData)
 }
 
 // GetByID gets secret record by ID.

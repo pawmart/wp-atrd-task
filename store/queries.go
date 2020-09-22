@@ -46,4 +46,13 @@ const (
 		WHERE 
 			"id" = $1
 	`
+
+	querySeedTestData = `
+	INSERT INTO "secrets" 
+		("id", "content", "remaining_views") 
+	VALUES
+		('b75ce598-f349-4c61-9246-2053e230187d', 'test', 999)
+	ON CONFLICT ("id")
+	DO NOTHING
+	`
 )
