@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,7 +18,11 @@ import (
 	"github.com/seblw/wp-atrd-task/store"
 )
 
+var addr = flag.String("addr", ":8080", "Address for listening")
+
 func main() {
+	flag.Parse()
+
 	db, err := initDB(
 		os.Getenv("POSTGRES_HOST"),
 		os.Getenv("POSTGRES_PORT"),
@@ -52,8 +57,7 @@ func main() {
 	api := server.NewServer(mux.NewRouter(), s)
 
 	srv := &http.Server{
-		// TODO: Parametrize port.
-		Addr:         ":8080",
+		Addr:         *addr,
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
