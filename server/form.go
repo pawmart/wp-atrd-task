@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -18,7 +19,16 @@ func (msg *Message) Validate() bool {
 	msg.Errors = make(map[string]string)
 
 	if strings.TrimSpace(msg.Secret) == "" {
-		msg.Errors["Secret"] = "Secret cannot be empty"
+		msg.Errors["Secret"] = "Field cannot be empty"
+	}
+
+	expireAfterViews, err := strconv.Atoi(msg.ExpireAfterViews)
+	if err != nil {
+		msg.Errors["ExpireAfterViews"] = "Field has invalid format"
+	}
+
+	if expireAfterViews < 1 {
+		msg.Errors["ExpireAfterViews"] = "Field must be greater that 0"
 	}
 
 	return len(msg.Errors) == 0

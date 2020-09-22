@@ -36,18 +36,22 @@ func (s *Server) HandleCreateSecret() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		expireAfter, err := strconv.Atoi(msg.ExpireAfter)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 
-		// TODO: Make ExpiresAt optional when expireAfter is zero.
 		sc := Secret{
 			Content:        msg.Secret,
 			RemainingViews: int32(expireAfterViews),
 			CreatedAt:      now,
-			ExpiresAt:      now.Add(time.Duration(expireAfter) * time.Minute),
+		}
+
+		if msg.ExpireAfter != "" {
+			expireAfter, err := strconv.Atoi(msg.ExpireAfter)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			t := now.Add(time.Duration(expireAfter) * time.Minute)
+			sc.ExpiresAt = &t
 		}
 
 		o, err := s.Store.Insert(context.Background(), convToStore(sc))
@@ -85,7 +89,7 @@ func (s *Server) HandleGetSecretByID() http.HandlerFunc {
 			return
 		}
 
-		if sc.RemainingViews == 0 || sc.ExpiresAt.Before(time.Now()) {
+		if sc.RemainingViews == 0 || (sc.ExpiresAt != nil && sc.ExpiresAt.Before(time.Now())) {
 			if err := s.Store.Delete(context.Background(), id); err != nil {
 				http.Error(w, fmt.Sprintf("failed to delete secret by ID: %v", err), http.StatusInternalServerError)
 				return
@@ -117,9 +121,9 @@ func (s *Server) HandleGetSecretByID() http.HandlerFunc {
 
 // Secret ..
 type Secret struct {
-	ID             string    `json:"id"`
-	Content        string    `json:"content"`
-	RemainingViews int32     `json:"remaining_views"`
-	CreatedAt      time.Time `json:"created_at"`
-	ExpiresAt      time.Time `json:"expires_at"`
+	ID             string     `json:"id"`
+	Content        string     `json:"content"`
+	RemainingViews int32      `json:"remaining_views"`
+	CreatedAt      time.Time  `json:"created_at"`
+	ExpiresAt      *time.Time `json:"expires_at"`
 }

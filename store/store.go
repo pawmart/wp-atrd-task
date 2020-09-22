@@ -35,11 +35,11 @@ type Storer interface {
 
 // Secret represents secret entry in DB.
 type Secret struct {
-	ID             uuid.UUID `db:"id"`
-	Content        string    `db:"content"`
-	RemainingViews int32     `db:"remaining_views"`
-	CreatedAt      time.Time `db:"created_at"`
-	ExpiresAt      time.Time `db:"expires_at"`
+	ID             uuid.UUID  `db:"id"`
+	Content        string     `db:"content"`
+	RemainingViews int32      `db:"remaining_views"`
+	CreatedAt      time.Time  `db:"created_at"`
+	ExpiresAt      *time.Time `db:"expires_at"`
 }
 
 // InitSecretsTable creates secrets table if not exists.
