@@ -19,7 +19,7 @@ func NewServer(r *mux.Router, st store.Storer) *Server {
 		Store:  st,
 	}
 
-	s.Router.HandleFunc("/v1/secret/", s.HandleCreateSecret()).Methods("POST")
+	s.Router.HandleFunc("/v1/secret", s.HandleCreateSecret()).Methods("POST")
 	s.Router.HandleFunc("/v1/secret/{id}", s.HandleGetSecretByID()).Methods("GET")
 
 	return s

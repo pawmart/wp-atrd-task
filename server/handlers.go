@@ -39,7 +39,7 @@ func (s *Server) HandleCreateSecret() http.HandlerFunc {
 		}
 
 		sc := Secret{
-			Content:        msg.Secret,
+			SecretText:     msg.Secret,
 			RemainingViews: int32(expireAfterViews),
 			CreatedAt:      now,
 		}
@@ -136,9 +136,9 @@ func PrepareResponse(r *http.Request, w http.ResponseWriter, s Secret) {
 
 // Secret representation for API layer.
 type Secret struct {
-	ID             string     `json:"id" xml:"id,attr"`
-	Content        string     `json:"content" xml:"content,attr" `
-	RemainingViews int32      `json:"remaining_views" xml:"remaining_views,attr"`
-	CreatedAt      time.Time  `json:"created_at" xml:"created_at,attr"`
-	ExpiresAt      *time.Time `json:"expires_at" xml:"expires_at,attr"`
+	Hash           string     `json:"hash" xml:"hash,attr"`
+	SecretText     string     `json:"secretText" xml:"secretText,attr" `
+	RemainingViews int32      `json:"remainingViews" xml:"remainingViews,attr"`
+	CreatedAt      time.Time  `json:"createdAt" xml:"createdAt,attr"`
+	ExpiresAt      *time.Time `json:"expiresAt" xml:"expiresAt,attr"`
 }
