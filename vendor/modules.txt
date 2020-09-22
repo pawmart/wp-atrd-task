@@ -1,0 +1,19 @@
+# github.com/cenkalti/backoff/v4 v4.0.2
+## explicit
+github.com/cenkalti/backoff/v4
+# github.com/google/uuid v1.1.2
+## explicit
+github.com/google/uuid
+# github.com/gorilla/mux v1.8.0
+## explicit
+github.com/gorilla/mux
+# github.com/jmoiron/sqlx v1.2.0
+## explicit
+github.com/jmoiron/sqlx
+github.com/jmoiron/sqlx/reflectx
+# github.com/lib/pq v1.0.0
+## explicit
+github.com/lib/pq
+github.com/lib/pq/oid
+# google.golang.org/appengine v1.6.6
+## explicit
