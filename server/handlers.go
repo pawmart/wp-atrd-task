@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -60,15 +61,7 @@ func (s *Server) HandleCreateSecret() http.HandlerFunc {
 			return
 		}
 
-		oj, err := json.Marshal(convToAPI(o))
-		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to marshal secret"), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("content-type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(oj)
+		PrepareResponse(req, w, convToAPI(o))
 	}
 }
 
@@ -108,22 +101,44 @@ func (s *Server) HandleGetSecretByID() http.HandlerFunc {
 			return
 		}
 
-		cj, err := json.Marshal(convToAPI(scu))
+		PrepareResponse(req, w, convToAPI(scu))
+	}
+}
+
+// PrepareResponse prepares HTTP response with content negotiation.
+func PrepareResponse(r *http.Request, w http.ResponseWriter, s Secret) {
+	const (
+		ContentTypeApplicationXML  = "application/xml"
+		ContentTypeApplicationJSON = "application/json"
+	)
+
+	if r.Header.Get("Accept") == ContentTypeApplicationXML {
+		sj, err := xml.Marshal(s)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to marshal secret: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(cj)
+		w.Header().Set("Content-Type", ContentTypeApplicationXML)
+		w.Write(sj)
+		return
 	}
+
+	sj, err := json.Marshal(s)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal secret: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", ContentTypeApplicationJSON)
+	w.Write(sj)
 }
 
-// Secret ..
+// Secret representation for API layer.
 type Secret struct {
-	ID             string     `json:"id"`
-	Content        string     `json:"content"`
-	RemainingViews int32      `json:"remaining_views"`
-	CreatedAt      time.Time  `json:"created_at"`
-	ExpiresAt      *time.Time `json:"expires_at"`
+	ID             string     `json:"id" xml:"id,attr"`
+	Content        string     `json:"content" xml:"content,attr" `
+	RemainingViews int32      `json:"remaining_views" xml:"remaining_views,attr"`
+	CreatedAt      time.Time  `json:"created_at" xml:"created_at,attr"`
+	ExpiresAt      *time.Time `json:"expires_at" xml:"expires_at,attr"`
 }
