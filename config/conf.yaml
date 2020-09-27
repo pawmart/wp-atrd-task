@@ -1,0 +1,9 @@
+server:
+  address: ""
+  port:    "8080"
+  timeout: 30
+
+redis:
+  address:  "redis:6379"
+  password: ""
+  database: 0

@@ -11,3 +11,8 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 
 - Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
 - Rozwiązanie zadania proszę załączyć jako 'merge request'. 
+
+## Uruchamianie
+
+- ```docker-compose build && docker-compose up```
+- przykładowy `curl -X POST "http://localhost:8080/v1/secret" -H  "accept: application/json" -H  "Content-Type: application/x-www-form-urlencoded" -d "secret=alamakota&expireAfterViews=0&expireAfter=1"`
