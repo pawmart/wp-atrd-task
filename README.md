@@ -11,3 +11,17 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 
 - Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
 - Rozwiązanie zadania proszę załączyć jako 'merge request'. 
+
+# Zadanie rekrutacyjne
+Do odpalenia skryptu potrzebne są pakiety: 
+- urllib3 - pakiet do (pip install urllib3)
+- peewee - ORM do ogarnięcia bazy danych (pip install peewee) 
+
+Wykorzystano bazę danych Sqlite3
+
+Start serwera komendą "python main.py"
+Serwer działa na (adres:port): localhost:8000
+Zapytanie POST testowane za pomocą skryptu "requesttest.py"
+Skrypt pisany i testowany na Windows 10.
+Python 3.7.4
+
