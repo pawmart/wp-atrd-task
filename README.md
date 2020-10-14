@@ -19,9 +19,9 @@ Do odpalenia skryptu potrzebne są pakiety:
 
 Wykorzystano bazę danych Sqlite3
 
-Start serwera komendą "python main.py"
-Serwer działa na (adres:port): localhost:8000
-Zapytanie POST testowane za pomocą skryptu "requesttest.py"
-Skrypt pisany i testowany na Windows 10.
-Python 3.7.4
+-- Start serwera komendą "python main.py"
+-- Serwer działa na (adres:port): localhost:8000
+-- Zapytanie POST testowane za pomocą skryptu "requesttest.py"
+-- Skrypt pisany i testowany na Windows 10.
+-- Python 3.7.4
 
