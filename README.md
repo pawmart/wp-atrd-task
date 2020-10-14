@@ -12,7 +12,7 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 - Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
 - Rozwiązanie zadania proszę załączyć jako 'merge request'. 
 
-# Zadanie rekrutacyjne
+# Rozwiązanie zadania - informacje
 Do odpalenia skryptu potrzebne są pakiety: 
 - urllib3 - pakiet do (pip install urllib3)
 - peewee - ORM do ogarnięcia bazy danych (pip install peewee) 
