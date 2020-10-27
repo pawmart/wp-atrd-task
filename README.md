@@ -10,4 +10,13 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 ## Wskazówki
 
 - Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
-- Rozwiązanie zadania proszę załączyć jako 'merge request'. 
+- Rozwiązanie zadania proszę załączyć jako 'merge request'.
+
+
+
+## Prerequisites:
+- "github.com/go-openapi/errors"
+- "github.com/go-openapi/runtime"
+- "github.com/go-openapi/runtime/middleware"
+- "github.com/go-openapi/strfmt"
+- "github.com/google/uuid"
