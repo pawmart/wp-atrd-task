@@ -5,16 +5,24 @@ package restapi
 import (
 	"crypto/tls"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/strfmt"
+	"github.com/google/uuid"
 
+	"wp-atrd-task/models"
 	"wp-atrd-task/restapi/operations"
 	"wp-atrd-task/restapi/operations/secret"
 )
 
 //go:generate swagger generate server --target ../../wp-atrd-task --name SecretServer --spec ../api/swagger/swagger.yml --principal interface{}
+
+var secrets = make(map[string]models.Secret)
+var secretsLock = &sync.Mutex{}
 
 func configureFlags(api *operations.SecretServerAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
@@ -39,16 +47,44 @@ func configureAPI(api *operations.SecretServerAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 	api.XMLProducer = runtime.XMLProducer()
 
-	if api.SecretAddSecretHandler == nil {
-		api.SecretAddSecretHandler = secret.AddSecretHandlerFunc(func(params secret.AddSecretParams) middleware.Responder {
-			return middleware.NotImplemented("operation secret.AddSecret has not yet been implemented")
-		})
-	}
-	if api.SecretGetSecretByHashHandler == nil {
-		api.SecretGetSecretByHashHandler = secret.GetSecretByHashHandlerFunc(func(params secret.GetSecretByHashParams) middleware.Responder {
-			return middleware.NotImplemented("operation secret.GetSecretByHash has not yet been implemented")
-		})
-	}
+	api.SecretAddSecretHandler = secret.AddSecretHandlerFunc(func(params secret.AddSecretParams) middleware.Responder {
+		now := time.Now()
+		expires := now.Add(time.Minute * time.Duration(params.ExpireAfter))
+		if params.ExpireAfter == 0 {
+			expires = expires.AddDate(100, 0, 0) // good enough, this won't run for 100 years...
+		}
+		hash := uuid.New().String()
+
+		newSecret := models.Secret{
+			CreatedAt:      strfmt.DateTime(now),
+			ExpiresAt:      strfmt.DateTime(expires),
+			Hash:           hash,
+			RemainingViews: params.ExpireAfterViews,
+			SecretText:     params.Secret,
+		}
+
+		AddSecret(&newSecret)
+		return secret.NewAddSecretOK().WithPayload(&newSecret)
+	})
+
+	api.SecretGetSecretByHashHandler = secret.GetSecretByHashHandlerFunc(func(params secret.GetSecretByHashParams) middleware.Responder {
+		foundSecret, prs := secrets[params.Hash]
+		if !prs {
+			return secret.NewGetSecretByHashNotFound()
+		}
+
+		expired := time.Time(foundSecret.ExpiresAt).Sub(time.Now())
+
+		if expired > 0 && foundSecret.RemainingViews > 0 {
+			foundSecret.RemainingViews--
+			UpdateSecret(&foundSecret)
+
+			return secret.NewGetSecretByHashOK().WithPayload(&foundSecret)
+		}
+
+		DeleteSecret(&foundSecret)
+		return secret.NewGetSecretByHashNotFound()
+	})
 
 	api.PreServerShutdown = func() {}
 
@@ -79,4 +115,29 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // So this is a good place to plug in a panic handling middleware, logging and metrics
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
+}
+
+// AddSecret add a secret to the storage
+func AddSecret(secret *models.Secret) {
+	secretsLock.Lock()
+	defer secretsLock.Unlock()
+
+	secrets[secret.Hash] = *secret
+}
+
+// UpdateSecret updates state of the secret
+func UpdateSecret(secret *models.Secret) {
+	secretsLock.Lock()
+	defer secretsLock.Unlock()
+
+	secrets[secret.Hash] = *secret
+
+}
+
+// DeleteSecret deletes the secret from the storage
+func DeleteSecret(secret *models.Secret) {
+	secretsLock.Lock()
+	defer secretsLock.Unlock()
+
+	delete(secrets, secret.Hash)
 }
