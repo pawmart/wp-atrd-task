@@ -1,4 +1,4 @@
-package controller_test
+package controller
 
 import (
 	"encoding/json"
@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alkmc/wp-atrd-task/controller"
 	"github.com/alkmc/wp-atrd-task/internal/entity"
 	"github.com/alkmc/wp-atrd-task/internal/repository"
 	"github.com/alkmc/wp-atrd-task/internal/responder"
@@ -28,7 +27,7 @@ var (
 	sRepo       = repository.NewRedis()
 	sService    = service.NewService(sRepo)
 	sValidator  = validator.NewValidator()
-	sController = controller.NewController(sService, sValidator)
+	sController = NewController(sService, sValidator)
 )
 
 const (
