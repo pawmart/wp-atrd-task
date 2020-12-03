@@ -48,8 +48,10 @@ paths:
           description: "successful operation"
           schema:
             $ref: "#/definitions/Secret"
-        405:
+        400:
           description: "Invalid input"
+        405:
+          description: "Invalid http method"
 
   /secret/{hash}:
     get:
@@ -64,7 +66,7 @@ paths:
       parameters:
         - name: "hash"
           in: "path"
-          description: "Unique hash to identify the secret"
+          description: "Unique 36 characters hash to identify the secret"
           required: true
           type: "string"
       responses:
@@ -72,8 +74,13 @@ paths:
           description: "successful operation"
           schema:
             $ref: "#/definitions/Secret"
+        400:
+          description: "invalid hash"
         404:
           description: "Secret not found"
+        405:
+          description: "Invalid http method"
+
 definitions:
   Secret:
     type: "object"
