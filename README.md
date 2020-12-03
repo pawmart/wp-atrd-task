@@ -11,3 +11,7 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 
 - Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
 - Rozwiązanie zadania proszę załączyć jako 'merge request'. 
+
+## Uruchomienie
+
+- docker-compose up
