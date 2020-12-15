@@ -1,0 +1,14 @@
+version: "2"
+services:
+  redis-admin:
+    image: faktiva/php-redis-admin
+    ports:
+      - "6380:80"
+    depends_on:
+      - redis
+    environment:
+      - PHPREDMIN_DATABASE_REDIS_0_HOST=redis
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"

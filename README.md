@@ -10,4 +10,21 @@ Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w d
 ## Wskazówki
 
 - Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
-- Rozwiązanie zadania proszę załączyć jako 'merge request'. 
+- Rozwiązanie zadania proszę załączyć jako 'merge request'.
+
+## Dev docs
+
+### Running dev env
+
+```bash
+docker-compose up
+# REST API http://localhost:3000
+# Redis web interface http://admin:admin@localhost:6380
+```
+
+### Running tests
+
+```bash
+cd cmd/server
+godog ../../features
+``````
