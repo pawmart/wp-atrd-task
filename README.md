@@ -1,16 +1,9 @@
-# Zadanie  GWP
+# Sample app
 
-Należy napisać prosty serwer HTTP. Zadanie powinno zostać zrealizowane w dowolnym z następujących języków: C/C++/python/GO. Zachęcamy do próby rozwiązania tego zadania w GO.
+# WIP, not finished yet
 
-## Specyfikacja
-
-- [Features](./features/secrets)
-- [Swagger](./api/swagger/swagger.yml)
-
-## Wskazówki
-
-- Pełna dowolność w wyborze bibliotek oraz rodzaju bazy danych lub jej braku.
-- Rozwiązanie zadania proszę załączyć jako 'merge request'.
+Simple app to store and fetch secrets saved to Redis.  
+Before secret it's stored, it's encrypted server side with AES 128bit
 
 ## Dev docs
 
