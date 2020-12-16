@@ -75,15 +75,25 @@ func GetSecret(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	resByte, err := service.DecryptWithAesCfb([]byte(config.AES_KEY), []byte(rawResFromRedis))
+	secretByte, err := service.DecryptWithAesCfb([]byte(config.AES_KEY), []byte(rawResFromRedis))
 	if err != nil {
 		logrus.Errorf("can't decrypt string: %v", err)
 		w.WriteHeader(500)
 		return
 	}
-	logrus.Debugf("secret: %v", string(resByte[:]))
-	// FIXME respond with JSON
-	w.Write(resByte)
+	logrus.Debugf("secret: %v", string(secretByte[:]))
+
+	rawResponse := SecretResponse{
+		Hash:       params["hash"],
+		SecretText: string(secretByte[:]),
+		CreatedAt:  time.Now(), //FIXME
+		ExpiresAt:  time.Now(), //FIXME
+		// FIXME implement max views
+		RemainingViews: 0,
+	}
+	//response, err := json.Marshal(&rawResponse)
+	response, err := json.MarshalIndent(rawResponse, "", "    ")
+	w.Write(response)
 }
 
 func GetDocsRedirect(w http.ResponseWriter, r *http.Request) {
