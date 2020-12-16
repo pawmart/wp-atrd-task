@@ -36,7 +36,11 @@ curl http://localhost:3000/v1/secret/216da4-047b-491e-823d-45787d6ea792
 
 ### Notes
 
-There are some issues and areas to improvement:
-- error handling
+If you don't set custom AES key, it will be automatically generated at server start.  
+Warning, this will cause error in decryption after app restart due to AES integrity check.  
+Make sure to set your own 16 character key via ENV var `AES_KEY`
+
+Due to time constraints and fact that this isn't production app by design, there are some issues and areas to improvement:
+- error and edge cases handling
 - smaller DB footprint with using other encoding than json, eg. https://github.com/vmihailenco/msgpack and not using base64 for secret
 - less layers of converting secret when setting/getting DB record
