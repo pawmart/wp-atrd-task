@@ -10,6 +10,7 @@ import (
 	"github.com/systemz/wp-atrd-task/internal/model"
 	"github.com/systemz/wp-atrd-task/internal/service"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type SecretResponse struct {
 	SecretText     string    `json:"secretText"`
 	CreatedAt      time.Time `json:"createdAt"`
 	ExpiresAt      time.Time `json:"expiresAt"`
-	RemainingViews int64     `json:"remainingViews"`
+	RemainingViews int       `json:"remainingViews"`
 }
 
 func redisKey(str string) string {
@@ -36,6 +37,15 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("too short secret"))
 		return
 	}
+
+	// detect how many views are allowed
+	expireAfterViewsStr := r.FormValue("expireAfterViews")
+	expireAfterViews, err := strconv.Atoi(expireAfterViewsStr)
+	if err != nil {
+		// fallback to unlimited fetches from DB
+		expireAfterViews = 0
+	}
+
 	encryptedByte, err := service.EncryptWithAesCfb([]byte(config.AES_KEY), []byte(secretVal))
 	if err != nil {
 		// FIXME
@@ -43,23 +53,27 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("error, check console"))
 		return
 	}
-	// FIXME save this in DB
 	createdAt := time.Now()
 	// FIXME get expire time from request
 	ttlSeconds := 900
 	expiresAt := createdAt.Add(time.Second * time.Duration(ttlSeconds))
 	b64Secret := base64.StdEncoding.EncodeToString(encryptedByte)
+
+	// prepare shared json for user and DB
 	rawResult := SecretResponse{
-		Hash:       newUuid,
-		SecretText: b64Secret,
-		CreatedAt:  createdAt,
-		ExpiresAt:  expiresAt,
-		// FIXME implement max views
-		RemainingViews: 0,
+		Hash:           newUuid,
+		SecretText:     b64Secret,
+		CreatedAt:      createdAt,
+		ExpiresAt:      expiresAt,
+		RemainingViews: expireAfterViews,
 	}
+
 	// create JSON for DB with encrypted secret
 	result, err := json.Marshal(&rawResult)
+
+	// throw JSON to DB
 	model.Redis.Set(redisKey, result, time.Second*time.Duration(ttlSeconds))
+
 	// create JSON for API result with plaintext secret
 	rawResult.SecretText = secretVal
 	result, err = json.MarshalIndent(rawResult, "", "    ")
@@ -68,13 +82,16 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("error, check console"))
 		return
 	}
+
+	// show result to user
 	w.Write(result)
 }
 
 func GetSecret(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logrus.Debugf("hash: %v", params["hash"])
-	rawResFromRedis, err := model.Redis.Get(redisKey(params["hash"])).Result()
+	key := redisKey(params["hash"])
+	rawResFromRedis, err := model.Redis.Get(key).Result()
 	if err != nil {
 		logrus.Errorf("can't find hash: %v", err)
 		w.WriteHeader(404)
@@ -96,9 +113,38 @@ func GetSecret(w http.ResponseWriter, r *http.Request) {
 
 	rawResponse := jsonFromDb
 	rawResponse.SecretText = secretPlaintext
-	rawResponse.RemainingViews = 0
-	//response, err := json.Marshal(&rawResponse)
-	response, err := json.MarshalIndent(rawResponse, "", "    ")
+
+	// view counter depleted actions
+	if rawResponse.RemainingViews == 1 {
+		// this was last view, remove record from DB and show result instantly
+		model.Redis.Del(key)
+		// show user that no further views are allowed
+		rawResponse.RemainingViews--
+		// pretty formatted JSON result
+		response, _ := json.MarshalIndent(rawResponse, "", "    ")
+		w.Write(response)
+		return
+	}
+
+	// update counters for DB record and user facing JSON
+	rawResponse.RemainingViews--
+	jsonFromDb.RemainingViews--
+
+	// view counter still allowing more views than 1
+	//if rawResponse.RemainingViews > 1 {
+	// update JSON for DB with encrypted secret
+	result, err := json.Marshal(&jsonFromDb)
+	if err != nil {
+		logrus.Errorf("can't marshal: %v", err)
+		w.WriteHeader(500)
+	}
+
+	// update JSON in DB
+	ttl := time.Now().Sub(jsonFromDb.ExpiresAt)
+	model.Redis.Set(key, result, ttl)
+
+	// response with updated view counter
+	response, _ := json.MarshalIndent(rawResponse, "", "    ")
 	w.Write(response)
 }
 
