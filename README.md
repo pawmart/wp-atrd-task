@@ -11,6 +11,14 @@ Secret is expired whatever comes first, depleted view counter or time
 App is created for being used as single instance. 
 For horizontal scaling and strong isolation guarantees it would need to have distributed locks for view counter expiration (can be done by redis, etcd or consul)
 
+
+## "Prod" env build
+
+```bash
+docker build -t wp-atrd-task .
+docker run --rm -e "HTTP_DOCS_DIR=/bin/api/swagger/" -p 3000:3000 wp-atrd-task
+```
+
 ## Dev docs
 
 ### Running dev env
