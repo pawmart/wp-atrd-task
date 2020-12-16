@@ -38,12 +38,25 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// detect how much time secret should be valid
+	expireAfterMinutesStr := r.FormValue("expireAfter")
+	expireAfterMinutes, err := strconv.Atoi(expireAfterMinutesStr)
+	if err != nil {
+		// fallback to lack of time expiration
+		expireAfterMinutes = 0
+	}
+
 	// detect how many views are allowed
 	expireAfterViewsStr := r.FormValue("expireAfterViews")
 	expireAfterViews, err := strconv.Atoi(expireAfterViewsStr)
 	if err != nil {
 		// fallback to unlimited fetches from DB
 		expireAfterViews = 0
+	}
+	if expireAfterViews < 1 {
+		// FIXME
+		w.Write([]byte("expireAfterViews must be greater than 0"))
+		return
 	}
 
 	encryptedByte, err := service.EncryptWithAesCfb([]byte(config.AES_KEY), []byte(secretVal))
@@ -54,9 +67,8 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	createdAt := time.Now()
-	// FIXME get expire time from request
-	ttlSeconds := 900
-	expiresAt := createdAt.Add(time.Second * time.Duration(ttlSeconds))
+	ttl := time.Minute * time.Duration(expireAfterMinutes)
+	expiresAt := createdAt.Add(ttl)
 	b64Secret := base64.StdEncoding.EncodeToString(encryptedByte)
 
 	// prepare shared json for user and DB
@@ -72,7 +84,7 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 	result, err := json.Marshal(&rawResult)
 
 	// throw JSON to DB
-	model.Redis.Set(redisKey, result, time.Second*time.Duration(ttlSeconds))
+	model.Redis.Set(redisKey, result, ttl)
 
 	// create JSON for API result with plaintext secret
 	rawResult.SecretText = secretVal
@@ -140,10 +152,18 @@ func GetSecret(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update JSON in DB
-	ttl := time.Now().Sub(jsonFromDb.ExpiresAt)
+	if time.Now().After(jsonFromDb.ExpiresAt) {
+		// time expired for this record already, redis probably didn't run GC yet
+		// delete it instantly and don't show secret to user, pretend that secret doesn't exist in DB already
+		model.Redis.Del(key)
+		w.WriteHeader(404)
+		return
+	}
+	// this redis lib probably doesn't have option to leave TTL as is, calculate it and set again
+	ttl := jsonFromDb.ExpiresAt.Sub(time.Now())
 	model.Redis.Set(key, result, ttl)
 
-	// response with updated view counter
+	// respond with updated view counter
 	response, _ := json.MarshalIndent(rawResponse, "", "    ")
 	w.Write(response)
 }
