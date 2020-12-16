@@ -22,7 +22,18 @@ cd cmd/server
 godog ../../features
 ``````
 
+#### Manual
+
+```
+go run github.com/systemz/wp-atrd-task/cmd/server
+```
+
 ```bash
 curl -XPOST "http://localhost:3000/v1/secret" -d "secret=testtest&expireAfter=1&expireAfterViews=5"
 curl http://localhost:3000/v1/secret/216da4-047b-491e-823d-45787d6ea792
 ```
+
+### Notes
+
+There are some issues and areas to improvement:
+- error handling

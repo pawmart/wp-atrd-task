@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -10,6 +11,14 @@ import (
 	"net/http"
 	"time"
 )
+
+type SecretResponse struct {
+	Hash           string    `json:"hash"`
+	SecretText     string    `json:"secretText"`
+	CreatedAt      time.Time `json:"createdAt"`
+	ExpiresAt      time.Time `json:"expiresAt"`
+	RemainingViews int64     `json:"remainingViews"`
+}
 
 func redisKey(str string) string {
 	return config.REDIS_KEY_PREFIX + "s." + str
@@ -33,9 +42,28 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("error, check console"))
 		return
 	}
-	// FIXME
-	model.Redis.Set(redisKey, encryptedByte, time.Second*900)
-	w.Write([]byte(newUuid))
+	// FIXME save this in DB
+	createdAt := time.Now()
+	// FIXME get expire time from request
+	ttlSeconds := 900
+	expiresAt := createdAt.Add(time.Second * time.Duration(ttlSeconds))
+	model.Redis.Set(redisKey, encryptedByte, time.Second*time.Duration(ttlSeconds))
+	rawResponse := SecretResponse{
+		Hash:       newUuid,
+		SecretText: secretVal,
+		CreatedAt:  createdAt,
+		ExpiresAt:  expiresAt,
+		// FIXME implement max views
+		RemainingViews: 0,
+	}
+	//response, err := json.Marshal(&rawResponse)
+	response, err := json.MarshalIndent(rawResponse, "", "    ")
+	if err != nil {
+		logrus.Error(err)
+		w.Write([]byte("error, check console"))
+		return
+	}
+	w.Write(response)
 }
 
 func GetSecret(w http.ResponseWriter, r *http.Request) {
@@ -54,5 +82,18 @@ func GetSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logrus.Debugf("secret: %v", string(resByte[:]))
+	// FIXME respond with JSON
 	w.Write(resByte)
+}
+
+func GetDocsRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/v1/docs/", 302)
+}
+
+func GetSwaggerUi(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, config.HTTP_DOCS_DIR+"swagger.html")
+}
+
+func GetSwaggerYml(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, config.HTTP_DOCS_DIR+"swagger.yml")
 }
