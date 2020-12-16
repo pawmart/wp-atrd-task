@@ -3,7 +3,8 @@
 # WIP, not finished yet
 
 Simple app to store and fetch secrets saved to Redis.  
-Before writing secret to DB, it's encrypted server side with AES CFB 128bit
+Before writing secret to DB, it's encrypted server side with AES CFB 128bit.  
+It's created for single instance of app, for horizontal scaling it would need to have distributed locks for views expiration
 
 ## Dev docs
 
@@ -37,3 +38,5 @@ curl http://localhost:3000/v1/secret/216da4-047b-491e-823d-45787d6ea792
 
 There are some issues and areas to improvement:
 - error handling
+- smaller DB footprint with using other encoding than json, eg. https://github.com/vmihailenco/msgpack and not using base64 for secret
+- less layers of converting secret when setting/getting DB record

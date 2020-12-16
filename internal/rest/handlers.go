@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -47,23 +48,27 @@ func NewSecret(w http.ResponseWriter, r *http.Request) {
 	// FIXME get expire time from request
 	ttlSeconds := 900
 	expiresAt := createdAt.Add(time.Second * time.Duration(ttlSeconds))
-	model.Redis.Set(redisKey, encryptedByte, time.Second*time.Duration(ttlSeconds))
-	rawResponse := SecretResponse{
+	b64Secret := base64.StdEncoding.EncodeToString(encryptedByte)
+	rawResult := SecretResponse{
 		Hash:       newUuid,
-		SecretText: secretVal,
+		SecretText: b64Secret,
 		CreatedAt:  createdAt,
 		ExpiresAt:  expiresAt,
 		// FIXME implement max views
 		RemainingViews: 0,
 	}
-	//response, err := json.Marshal(&rawResponse)
-	response, err := json.MarshalIndent(rawResponse, "", "    ")
+	// create JSON for DB with encrypted secret
+	result, err := json.Marshal(&rawResult)
+	model.Redis.Set(redisKey, result, time.Second*time.Duration(ttlSeconds))
+	// create JSON for API result with plaintext secret
+	rawResult.SecretText = secretVal
+	result, err = json.MarshalIndent(rawResult, "", "    ")
 	if err != nil {
 		logrus.Error(err)
 		w.Write([]byte("error, check console"))
 		return
 	}
-	w.Write(response)
+	w.Write(result)
 }
 
 func GetSecret(w http.ResponseWriter, r *http.Request) {
@@ -75,22 +80,23 @@ func GetSecret(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	secretByte, err := service.DecryptWithAesCfb([]byte(config.AES_KEY), []byte(rawResFromRedis))
+	var jsonFromDb SecretResponse
+	err = json.Unmarshal([]byte(rawResFromRedis), &jsonFromDb)
+	secretB64Byte, err := base64.StdEncoding.DecodeString(string(jsonFromDb.SecretText[:]))
+	// decrypt secret for user
+	secretByte, err := service.DecryptWithAesCfb([]byte(config.AES_KEY), []byte(secretB64Byte))
 	if err != nil {
 		logrus.Errorf("can't decrypt string: %v", err)
 		w.WriteHeader(500)
 		return
 	}
-	logrus.Debugf("secret: %v", string(secretByte[:]))
+	secretPlaintext := string(secretByte[:])
+	//logrus.Debugf("secret: %v", string(secretByte[:]))
+	logrus.Debugf("secret: %v", secretPlaintext)
 
-	rawResponse := SecretResponse{
-		Hash:       params["hash"],
-		SecretText: string(secretByte[:]),
-		CreatedAt:  time.Now(), //FIXME
-		ExpiresAt:  time.Now(), //FIXME
-		// FIXME implement max views
-		RemainingViews: 0,
-	}
+	rawResponse := jsonFromDb
+	rawResponse.SecretText = secretPlaintext
+	rawResponse.RemainingViews = 0
 	//response, err := json.Marshal(&rawResponse)
 	response, err := json.MarshalIndent(rawResponse, "", "    ")
 	w.Write(response)
