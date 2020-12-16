@@ -4,7 +4,7 @@ Simple demo app to store and fetch secrets saved to Redis.
 Before writing secret to DB, it's encrypted server side with AES CFB 128bit.  
 
 It supports expiration by number of requests (must be set to more than 0) and minutes entered by user.  
-Secret is expired whatever comes first, depleted view counter or time
+Secret expires whatever comes first, depleted view counter or time
 
 App is created for being used as single instance. 
 For horizontal scaling and strong isolation guarantees it would need to have distributed locks for view counter expiration (can be done by redis, etcd or consul)
