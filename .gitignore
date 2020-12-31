@@ -1,0 +1,4 @@
+.idea
+config/dev.json
+builds
+*.out
