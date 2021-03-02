@@ -15,10 +15,10 @@ import (
 const CollectionSecret = "Secrets"
 
 // NewStorage returns a new MongoDB storage
-func NewStorage(db *mongo.Database) (*Storage, error) {
+func NewStorage(db *mongo.Database) *Storage {
 	return &Storage{
 		SecretCollection: db.Collection(CollectionSecret),
-	}, nil
+	}
 }
 
 // Storage stores Secrets data in mongodb
@@ -49,8 +49,8 @@ func (s *Storage) AddSecret(secret adding.Secret) (*listing.Secret, error) {
 	return &secretToReturn, nil
 }
 
-// GetSecretByHash returns secret with given hash, if not found returns ErrNotFound
-func (s *Storage) GetSecretByHash(hash string) (*listing.Secret, error) {
+// GetSecret returns secret with given hash, if not found returns ErrNotFound
+func (s *Storage) GetSecret(hash string) (*listing.Secret, error) {
 
 	objectID, err := primitive.ObjectIDFromHex(hash)
 
@@ -66,26 +66,28 @@ func (s *Storage) GetSecretByHash(hash string) (*listing.Secret, error) {
 
 	result := s.SecretCollection.FindOne(context.TODO(), filter)
 
+	if result.Err() == mongo.ErrNoDocuments {
+		return nil, listing.ErrNotFound
+	}
+
 	secret := Secret{}
 
 	if err := result.Decode(&secret); err != nil {
 		return nil, err
 	}
 
-	listingSecret := secret.ToListingSecret()
-	return &listingSecret, nil
-}
+	update := s.SecretCollection.FindOneAndUpdate(
+		context.TODO(),
+		filter,
+		bson.M{"remainingViews": secret.RemainingViews - 1},
+	)
 
-// GetSecret trys to get a secret by hash
-func (s *Storage) GetSecret(hash string) (*listing.Secret, error) {
-
-	secret, err := s.GetSecretByHash(hash)
-
-	if err != nil {
+	if update.Err() != nil {
 		return nil, err
 	}
 
-	return secret, nil
+	listingSecret := secret.ToListingSecret()
+	return &listingSecret, nil
 }
 
 func calculateExpireDate(createdAt time.Time, expireTime int32) time.Time {

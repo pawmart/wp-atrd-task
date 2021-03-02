@@ -2,7 +2,7 @@ package adding
 
 // Secret adefines properties needed for secret creation
 type Secret struct {
-	SecretText       string
-	ExpireAfterViews int32
-	ExpireAfter      int32
+	SecretText       string `schema:"secret,required"`
+	ExpireAfterViews int32  `schema:"expireAfterViews,required"`
+	ExpireAfter      int32  `schema:"expireAfter,required"`
 }
