@@ -1,5 +1,10 @@
 package listing
 
+import "errors"
+
+// ErrNotFound is used when a secret is not found
+var ErrNotFound = errors.New("Secret not found")
+
 // Repository provides access to secrets
 type Repository interface {
 	GetSecret(string) (*Secret, error)
@@ -19,6 +24,7 @@ type service struct {
 	repo Repository
 }
 
+// GetSecret returns a secret by hash value
 func (s *service) GetSecret(secretHash string) (*Secret, error) {
 	return s.repo.GetSecret(secretHash)
 }

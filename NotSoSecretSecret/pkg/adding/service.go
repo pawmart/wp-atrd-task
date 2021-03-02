@@ -1,6 +1,6 @@
 package adding
 
-import "nososecretsercet/pkg/listing"
+import "notsosecretsercet/pkg/listing"
 
 // Service provides a Secret adding operations
 type Service interface {
@@ -9,8 +9,7 @@ type Service interface {
 
 // Repository provides access to secret repository
 type Repository interface {
-	AddSecret(Secret) (string, error)
-	GetSecret(string) (*listing.Secret, error) 
+	AddSecret(Secret) (*listing.Secret, error)
 }
 
 // NewService creates and adding service with neeede dependencies
@@ -25,17 +24,11 @@ type service struct {
 // AddSecret persists given secret to storage
 func (s *service) AddSecret(secret Secret) (*listing.Secret, error) {
 
-	newHash, err := s.repo.AddSecret(secret)
+	createdSecret, err := s.repo.AddSecret(secret)
 
 	if err != nil {
 		return nil, err
 	}
 
-	newCreatedSecret, err := s.repo.GetSecret(newHash)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return newCreatedSecret, nil
+	return createdSecret, nil
 }
