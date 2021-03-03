@@ -45,6 +45,8 @@ func main() {
 
 	router := rest.Handler(addingService, listingService)
 
-	fmt.Println("The secret server is on tap now: http://localhost:8080")
-	http.ListenAndServe(":8080", router)
+	port := ":" + config.Port
+	fmt.Println("The secret server is on tap now: http://localhost" + port)
+	
+	http.ListenAndServe(port, router)
 }

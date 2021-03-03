@@ -1,0 +1,15 @@
+version: '3.9'
+services:
+  web:
+    restart: always
+    build: .
+    ports:
+      - 7777:7777
+    volumes:
+      - .:/code
+    depends_on: 
+      - mongo
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017
