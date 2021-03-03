@@ -22,7 +22,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.DbUri))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.DbURI))
 
 	if err != nil {
 		log.Fatalf("Unable to connect to database. Secret server shuts down :(")
