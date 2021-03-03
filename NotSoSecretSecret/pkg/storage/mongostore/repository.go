@@ -2,6 +2,7 @@ package mongostore
 
 import (
 	"context"
+	"fmt"
 	"notsosecretsercet/pkg/adding"
 	"notsosecretsercet/pkg/listing"
 	"time"
@@ -59,9 +60,11 @@ func (s *Storage) GetSecret(hash string) (*listing.Secret, error) {
 	}
 
 	filter := bson.M{
-		"_id":            objectID,
-		"remainingViews": bson.M{"gt": 0},
-		"expiresAt":      bson.M{"$gt": time.Now().Unix()},
+		"$and": bson.A{
+			bson.M{"_id": objectID},
+			bson.M{"remainingViews": bson.M{"$gt": 0}},
+			bson.M{"expiresAt": bson.M{"$gt": time.Now()}},
+		},
 	}
 
 	result := s.SecretCollection.FindOne(context.TODO(), filter)
@@ -79,13 +82,15 @@ func (s *Storage) GetSecret(hash string) (*listing.Secret, error) {
 	update := s.SecretCollection.FindOneAndUpdate(
 		context.TODO(),
 		filter,
-		bson.M{"remainingViews": secret.RemainingViews - 1},
+		bson.M{"$set": bson.M{"remainingViews": secret.RemainingViews - 1}},
 	)
 
 	if update.Err() != nil {
-		return nil, err
+		fmt.Println(update.Err())
+		return nil, update.Err()
 	}
 
+	secret.RemainingViews = secret.RemainingViews - 1
 	listingSecret := secret.ToListingSecret()
 	return &listingSecret, nil
 }

@@ -13,14 +13,17 @@ import (
 const (
 	ContentTypeApplicationXML  = "application/xml"
 	ContentTypeApplicationJSON = "application/json"
+	apiVersion                 = "/v1"
 )
 
 // Handler returns secret service handler
 func Handler(as adding.Service, ls listing.Service) http.Handler {
 	router := chi.NewRouter()
 
-	router.Post("/secret", addSecret(as))
-	router.Get("/secrets/{secretHash}", getSecret(ls))
+	router.Route(apiVersion, func(r chi.Router) {
+		r.Post("/secret", addSecret(as))
+		r.Get("/secret/{secretHash}", getSecret(ls))
+	})
 
 	return router
 }
@@ -47,20 +50,38 @@ func addSecret(as adding.Service) http.HandlerFunc {
 			return
 		}
 
-		if r.Header.Get("Accept") == ContentTypeApplicationXML {
-			w.Header().Set("Content-Type", ContentTypeApplicationXML)
-			xml.NewEncoder(w).Encode(createdSecret)
-			return
-		}
-
-		w.Header().Set("Content-Type", ContentTypeApplicationJSON)
-		json.NewEncoder(w).Encode(createdSecret)
+		handleResponse(w, r, createdSecret)
 
 	}
 }
 
 func getSecret(ls listing.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		secretHash := chi.URLParam(r, "secretHash")
 
+		secret, err := ls.GetSecret(secretHash)
+
+		if err == listing.ErrNotFound {
+			http.Error(w, "Secret not found", http.StatusNotFound)
+			return
+		}
+
+		if err != nil {
+			http.Error(w, "Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		handleResponse(w, r, secret)
 	}
+}
+
+func handleResponse(w http.ResponseWriter, r *http.Request, secret *listing.Secret) {
+	if r.Header.Get("Accept") == ContentTypeApplicationXML {
+		w.Header().Set("Content-Type", ContentTypeApplicationXML)
+		xml.NewEncoder(w).Encode(secret)
+		return
+	}
+
+	w.Header().Set("Content-Type", ContentTypeApplicationJSON)
+	json.NewEncoder(w).Encode(secret)
 }

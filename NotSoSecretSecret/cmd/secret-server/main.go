@@ -57,14 +57,6 @@ func main() {
 	addingService := adding.NewService(repo)
 	listingService := listing.NewService(repo)
 
-	// testSecret := adding.Secret{
-	// 	SecretText:       "Very very secret",
-	// 	ExpireAfterViews: 5,
-	// 	ExpireAfter:      5,
-	// }
-
-	// addingService.AddSecret(testSecret)
-
 	router := rest.Handler(addingService, listingService)
 
 	fmt.Println("The secret server is on tap now: http://localhost:8080")
