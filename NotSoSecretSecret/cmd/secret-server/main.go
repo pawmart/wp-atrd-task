@@ -28,6 +28,12 @@ func main() {
 		log.Fatalf("Unable to connect to database. Secret server shuts down :(")
 	}
 
+	defer func() {
+		if err := client.Disconnect(context.TODO()); err != nil {
+			log.Fatalf("There was a problem durning mongo clien disconecting :(")
+		}
+	}()
+
 	pingCtx, pingCtxCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer pingCtxCancel()
 
@@ -46,7 +52,8 @@ func main() {
 	router := rest.Handler(addingService, listingService)
 
 	port := ":" + config.Port
+	fmt.Println("")
 	fmt.Println("The secret server is on tap now: http://localhost" + port)
-	
+
 	http.ListenAndServe(port, router)
 }
