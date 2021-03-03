@@ -43,6 +43,11 @@ func addSecret(as adding.Service) http.HandlerFunc {
 			return
 		}
 
+		if newSecret.ExpireAfterViews < 0 {
+			http.Error(w, "Invalid input", http.StatusMethodNotAllowed)
+			return
+		}
+
 		createdSecret, err := as.AddSecret(newSecret)
 
 		if err != nil {
