@@ -14,6 +14,7 @@ const (
 	ContentTypeApplicationXML  = "application/xml"
 	ContentTypeApplicationJSON = "application/json"
 	apiVersion                 = "/v1"
+	InvalidInputMessage        = "Invalid input"
 )
 
 // Handler returns secret service handler
@@ -34,17 +35,17 @@ func addSecret(as adding.Service) http.HandlerFunc {
 		newSecret := adding.Secret{}
 
 		if err := parseForm(r, &newSecret); err != nil {
-			http.Error(w, "Invalid input", http.StatusMethodNotAllowed)
+			http.Error(w, InvalidInputMessage, http.StatusMethodNotAllowed)
 			return
 		}
 
 		if newSecret.ExpireAfterViews < 1 {
-			http.Error(w, "Invalid input", http.StatusMethodNotAllowed)
+			http.Error(w, InvalidInputMessage, http.StatusMethodNotAllowed)
 			return
 		}
 
-		if newSecret.ExpireAfterViews < 0 {
-			http.Error(w, "Invalid input", http.StatusMethodNotAllowed)
+		if newSecret.ExpireAfter < 0 {
+			http.Error(w, InvalidInputMessage, http.StatusMethodNotAllowed)
 			return
 		}
 
